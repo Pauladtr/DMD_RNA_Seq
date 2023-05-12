@@ -50,7 +50,40 @@ ggplot(data.frame(lcpm_filtered), aes(x = lcpm_filtered)) +
   labs(x = "lcpm", y = "Density") +
   ggtitle("Density Plot after Filtration")
 
+#Transformations
+cpm <- cpm(dgeFull)
+lcpm <- cpm(dgeFull, log = TRUE)
 
+#Density plot - Raw Data
+nsamples <- ncol(dgeFull)
+
+#Make a color vector
+colors <- c(rep("red", 3), rep("blue", 3), rep("green", 3))
+
+par(mfrow = c(1, 2))
+plot(density(lcpm[, 1]), ylim = c(0, 1.35), col = colors[1], lwd = 2, las = 2, 
+     main = "Raw Data", xlab = "logCPM")
+for(i in 2:nsamples){
+  den <- density(lcpm[, i])
+  lines(den$x, den$y, lwd = 2, col = colors[i])
+}
+
+#Remove low expressed genes
+keep.exprs <- filterByExpr(dgeFull, group = sampleInfo$condition, min.count = 10)
+dgeFiltered <- dgeFull[keep.exprs, , keep.lib.sizes = FALSE]
+
+#Transformations
+cpm <- cpm(dgeFiltered)
+lcpm <- cpm(dgeFiltered, log = TRUE)
+
+#Density plot - Filtered Data
+nsamples <- ncol(dgeFiltered)
+plot(density(lcpm[, 1]), ylim = c(0, 1.35), col = colors[1], lwd = 2, las = 2, 
+     main = "Filtered Data", xlab = "logCPM")
+for(i in 2:nsamples){
+  den <- density(lcpm[, i])
+  lines(den$x, den$y, lwd = 2, col = colors[i])
+}
 # Normalization of gene expression
 D_Normalized <- calcNormFactors(D_Filtered)
 
@@ -69,15 +102,31 @@ mds <- plotMDS(dgeFilt, col = dgeFilt$samples$color, main = "MDS plot")
 
 
 ## Boxplot
+# Extract the counts from dgeFull
+counts_before_norm <- dgeFull$counts
+
+# Boxplot before the normalization
+boxplot(counts_before_norm, 
+        main = "Boxplot before Normalization", 
+        xlab = "", 
+        ylab = "Log2 counts per million",
+        las = 2,
+        col = D_Filtered$samples$color,
+        cex.axis = 0.7)
 
 # Check distributions of samples using boxplots
 logcounts <- cpm(dgeFilt, log=TRUE)
 
-# Check distributions of samples using boxplots
-boxplot(logcounts, 
+# Boxplot after normalization
+boxplot(logCounts, 
         xlab="", 
         ylab="Log2 counts per million",
-        las=2)
+        las=2,
+        col = D_Filtered$samples$color,  # Use the color vector from the MDS plot
+        cex.axis = 0.7,  # Adjust the size of the sample names
+        mar = c(5, 6, 4, 2),  # Adjust the plot margins 
+        main= "Boxplot after Normalization"
+)
 
 ##Heatmap
 
@@ -106,9 +155,13 @@ col.cell <- c("purple", "orange")[sampleInfo$Condition]
 
 # Plot the heatmap
 dev.new()
-heatmap.2(highly_variable_lcpm, 
+heatmap.2(filtered_normalized_selected,
           col = rev(morecols(50)),
-          trace = "column", 
+          trace = "column",
           main = "Top 500 most variable genes across samples",
-          ColSideColors = col.cell, scale = "row")
+          ColSideColors = col.cell,
+          cexCol = 0.9,
+          scale = "row", 
+          labRow = FALSE,
+          )
 
