@@ -37,7 +37,6 @@ ggplot(data.frame(lcpm), aes(x = lcpm)) +
 
 #Remove genes that are lowly expressed
 keep <- filterByExpr(dgeFull, group = sampleInfo$Condition, min.count = 10)
-dgeFilt <- dgeFull[keep, ]
 D_Filtered <- dgeFull[keep, ]
 
 
