@@ -41,7 +41,7 @@ ggplot(lcpm %>% reshape2::melt() %>%
 ##Filter out lowly expressed genes
 
 #Remove genes that are lowly expressed
-keep <- filterByExpr(dgeFull, group = sampleInfo$Condition, min.count = 130)
+keep <- filterByExpr(dgeFull, group = sampleInfo$Condition, min.count = 40)
 D_Filtered <- dgeFull[keep, ]
 
 
