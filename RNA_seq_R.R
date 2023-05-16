@@ -133,3 +133,59 @@ heatmap.2(filtered_normalized_selected,
           labRow = FALSE,
           )
 
+##Differential Gene expression analysis
+dgeFull <- estimateCommonDisp(D_Normalized)
+dgeFull <- estimateTagwiseDisp(dgeFull)
+dgeFull
+
+#Define the groups for comparison
+group1 <- "DMDI"
+group2 <- "DMDII"
+group3 <- "WT"
+
+#Perform an exact test for the difference between the conditions: DMDI and WT, DMDII and WT
+dgeTest1 <- exactTest(dgeFull, pair = c(group1, group3))
+dgeTest1
+dgeTest2 <- exactTest(dgeFull, pair = c(group2, group3))
+dgeTest2
+
+# Get the differential expression results for each comparison
+de_genes1 <- topTags(dgeTest1, n = Inf)$table
+de_genes2 <- topTags(dgeTest2, n = Inf)$table
+
+# Print the differential expression results
+head(de_genes1)
+head(de_genes2)
+
+#Get a summary DGE table (returns significant genes with absolute log fold change at least 1 and adjusted p value < 0.05)
+summary(decideTests(object = dgeTest1, lfc = 1))
+summary(decideTests(object = dgeTest2, lfc = 1))
+
+#Export differential gene expression analysis table to CSV file
+write.csv(as.data.frame(de_genes1), file="condition_DMDI_vs_WT_dge.csv")
+write.csv(as.data.frame(de_genes2), file="condition_DMDII_vs_WT_dge.csv")
+
+
+##DGE vizualisation
+# Volcano plot for de_genes1 (DMDI vs. WT)
+ggplot(de_genes1, aes(x = logFC, y = -log10(PValue))) +
+  geom_point(size = 1, color = "black") +
+  geom_point(data = subset(de_genes1, abs(logFC) >= 1 & PValue < 0.05), size = 1, color = "red") +
+  theme_bw() +
+  labs(x = "Log Fold Change (DMDI vs. WT)", y = "-log10(P-value)") +
+  ggtitle("Volcano Plot (DMDI vs. WT)")
+
+# Volcano plot for de_genes2 (DMDII vs. WT)
+ggplot(de_genes2, aes(x = logFC, y = -log10(PValue))) +
+  geom_point(size = 1, color = "black") +
+  geom_point(data = subset(de_genes2, abs(logFC) >= 1 & PValue < 0.05), size = 1, color = "red") +
+  theme_bw() +
+  labs(x = "Log Fold Change (DMDII vs. WT)", y = "-log10(P-value)") +
+  ggtitle("Volcano Plot (DMDII vs. WT)")
+
+
+
+#MA plot for dgeTest1 and degTest2
+
+plotMD(dgeTest1)
+plotMD(dgeTest2)
