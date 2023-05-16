@@ -6,6 +6,9 @@ library (limma)
 library (readxl)
 library(RColorBrewer)
 library(gplots)
+library (reshape2)
+library(magrittr)
+library(dplyr)
 
 # Set the work directory
 setwd("C:/Users/paula/OneDrive/Documents/EdgeR_DMD")
@@ -17,87 +20,53 @@ counts <- read.table("countData.txt", header = TRUE, row.names = 1)
 sampleInfo <- read_excel("design.csv.xlsx", sheet = 1)
 
 #Creating the DGE object
-dgeFull <- DGEList(counts, group=sampleInfo$condition)
+dgeFull <- DGEList(counts, group=sampleInfo$Condition)
 dgeFull
 
 #Transformations
-cpm <- cpm(dgeFull)
 lcpm <- cpm(dgeFull, log = TRUE)
 
 ##Create a density plot using ggplot2 (before filtration)
+# Create a vector of colors based on sample names
+colors <- c(DMDII = "red", DMDI = "blue", WT = "green")
 
-# Convert lcpm to a numeric vector
-lcpm <- as.vector(lcpm)
-ggplot(data.frame(lcpm), aes(x = lcpm)) +
+ggplot(lcpm %>% reshape2::melt() %>%
+         mutate(group = gsub("_.*","",Var2)), aes(x = value, group = group, colour = group)) +
   geom_density() +
+  theme_bw() +
   labs(x = "lcpm", y = "Density") +
+  scale_color_manual(values = colors) +
   ggtitle("Density Plot")
 
 ##Filter out lowly expressed genes
 
 #Remove genes that are lowly expressed
-keep <- filterByExpr(dgeFull, group = sampleInfo$Condition, min.count = 10)
+keep <- filterByExpr(dgeFull, group = sampleInfo$Condition, min.count = 130)
 D_Filtered <- dgeFull[keep, ]
 
 
 ## Create a density plot using ggplot2 (after filtration)
-
-# Convert lcpm to a numeric vector
-lcpm_filtered <- as.vector(cpm(dgeFilt, log = TRUE))
-ggplot(data.frame(lcpm_filtered), aes(x = lcpm_filtered)) +
+ggplot(reshape2::melt(cpm(D_Filtered, log = TRUE)) %>% 
+         mutate(group = gsub("_.*", "", Var2)), 
+       aes(x = value, group = group, colour = group)) +
   geom_density() +
+  theme_bw() +
   labs(x = "lcpm", y = "Density") +
-  ggtitle("Density Plot after Filtration")
+  scale_color_manual(values = colors) +
+  ggtitle("Density Plot (After Filtration)")
 
-#Transformations
-cpm <- cpm(dgeFull)
-lcpm <- cpm(dgeFull, log = TRUE)
 
-#Density plot - Raw Data
-nsamples <- ncol(dgeFull)
-
-#Make a color vector
-colors <- c(rep("red", 3), rep("blue", 3), rep("green", 3))
-
-par(mfrow = c(1, 2))
-plot(density(lcpm[, 1]), ylim = c(0, 1.35), col = colors[1], lwd = 2, las = 2, 
-     main = "Raw Data", xlab = "logCPM")
-for(i in 2:nsamples){
-  den <- density(lcpm[, i])
-  lines(den$x, den$y, lwd = 2, col = colors[i])
-}
-
-#Remove low expressed genes
-keep.exprs <- filterByExpr(dgeFull, group = sampleInfo$condition, min.count = 10)
-dgeFiltered <- dgeFull[keep.exprs, , keep.lib.sizes = FALSE]
-
-#Transformations
-cpm <- cpm(dgeFiltered)
-lcpm <- cpm(dgeFiltered, log = TRUE)
-
-#Density plot - Filtered Data
-nsamples <- ncol(dgeFiltered)
-plot(density(lcpm[, 1]), ylim = c(0, 1.35), col = colors[1], lwd = 2, las = 2, 
-     main = "Filtered Data", xlab = "logCPM")
-for(i in 2:nsamples){
-  den <- density(lcpm[, i])
-  lines(den$x, den$y, lwd = 2, col = colors[i])
-}
 # Normalization of gene expression
 D_Normalized <- calcNormFactors(D_Filtered)
 
 
 ## Create MDS plot
 
-# Create a vector of colors based on sample names
-colors <- c(rep("red", 3), rep("blue", 3), rep("green", 3))
-
 # Assign colors to the DGE_List object
 dgeFilt$samples$color <- colors
 
 # Create MDS plot with colored groups
 mds <- plotMDS(dgeFilt, col = dgeFilt$samples$color, main = "MDS plot")
-
 
 
 ## Boxplot
