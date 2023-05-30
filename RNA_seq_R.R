@@ -83,10 +83,10 @@ boxplot(counts_before_norm,
         cex.axis = 0.7)
 
 # Check distributions of samples using boxplots
-logcounts <- cpm(dgeFilt, log=TRUE)
+lpcm <- cpm(dgeFilt, log=TRUE)
 
 # Boxplot after normalization
-boxplot(logCounts, 
+boxplot(lpcm, 
         xlab="", 
         ylab="Log2 counts per million",
         las=2,
