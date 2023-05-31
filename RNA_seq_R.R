@@ -165,6 +165,13 @@ summary(decideTests(object = dgeTest2, lfc = 1))
 write.csv(as.data.frame(de_genes1), file="condition_DMDI_vs_WT_dge.csv")
 write.csv(as.data.frame(de_genes2), file="condition_DMDII_vs_WT_dge.csv")
 
+# Merge DMDI and DMDII results into one table
+merged_results <- merge(de_genes1, de_genes2, by = "row.names", all = TRUE)
+colnames(merged_results) <- c("Gene", "DMDI_logFC","DMDI_logPCM", "DMDI_PValue", "DMDI_FDR", "DMDII_logFC","DMDII_logPCM", "DMDII_PValue", "DMDII_FDR")
+merged_results <- merged_results[order(merged_results$Gene), ]  # Sort by gene name
+
+# Export merged results to CSV file
+write.csv(merged_results, file = "merged_results.csv", row.names = FALSE)
 
 ##DGE vizualisation
 # Volcano plot for de_genes1 (DMDI vs. WT)
@@ -189,3 +196,65 @@ ggplot(de_genes2, aes(x = logFC, y = -log10(PValue))) +
 
 plotMD(dgeTest1)
 plotMD(dgeTest2)
+
+##Finding the overlap between the de_genes1 and de_genes2
+
+# Filter de_genes1 for upregulated genes
+upregulated_genes1 <- de_genes1[de_genes1$logFC > 1 & de_genes1$FDR < 0.05, ]
+
+# Filter de_genes2 for upregulated genes
+upregulated_genes2 <- de_genes2[de_genes2$logFC > 1 & de_genes2$FDR < 0.05, ]
+
+# Get the gene names for upregulated genes
+upregulated_gene_names1 <- rownames(upregulated_genes1)
+upregulated_gene_names2 <- rownames(upregulated_genes2)
+
+# Find the intersect of upregulated genes
+intersect_upregulated_genes <- intersect(upregulated_gene_names1, upregulated_gene_names2)
+
+# Print the intersecting upregulated genes
+print(intersect_upregulated_genes)
+
+
+
+## Filter de_genes1 for downregulated genes
+downregulated_genes1 <- de_genes1[de_genes1$logFC < -1 & de_genes1$FDR < 0.05, ]
+
+# Filter de_genes2 for downregulated genes
+downregulated_genes2 <- de_genes2[de_genes2$logFC < -1 & de_genes2$FDR < 0.05, ]
+
+# Get the gene names for downregulated genes
+downregulated_gene_names1 <- rownames(downregulated_genes1)
+downregulated_gene_names2 <- rownames(downregulated_genes2)
+
+# Find the intersect of downregulated genes
+intersect_downregulated_genes <- intersect(downregulated_gene_names1, downregulated_gene_names2)
+
+# Print the intersecting downregulated genes
+print(intersect_downregulated_genes)
+
+# Find genes upregulated in de_genes1 but downregulated in de_genes2
+genes_upregulated_de1_downregulated_de2 <- intersect(upregulated_gene_names1, downregulated_gene_names2)
+# Print the list of genes
+print(genes_upregulated_de1_downregulated_de2)
+
+#Find genes downregulated in de_genes1 but upregulated in de_genes2
+genes_downregulated_de1_upregulated_de2 <- intersect(downregulated_gene_names1, upregulated_gene_names2)
+# Print the list of genes
+print(genes_downregulated_de1_upregulated_de2)
+
+##Save the lists 
+
+# Export the intersecting genes as Excel files
+write.csv(as.data.frame(intersect_upregulated_genes),
+           file = "intersect_upregulated_genes.csv")
+
+write.csv(as.data.frame(intersect_downregulated_genes),
+           file = "intersect_downregulated_genes.csv")
+
+write.csv(as.data.frame(genes_upregulated_de1_downregulated_de2),
+           file = "genes_upregulated_de1_downregulated_de2.csv")
+
+write.csv(as.data.frame(genes_downregulated_de1_upregulated_de2),
+           file = "genes_downregulated_de1_upregulated_de2.csv")
+
