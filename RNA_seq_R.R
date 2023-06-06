@@ -233,13 +233,25 @@ intersect_downregulated_genes <- intersect(downregulated_gene_names1, downregula
 # Print the intersecting downregulated genes
 print(intersect_downregulated_genes)
 
+## Merge all the differentially expressed genes in the DMDI sample
+deg_DMDI <- rbind(upregulated_genes1, downregulated_genes1)
+
+# Merge all the differentially expressed genes in the DMDII sample
+deg_DMDII <- rbind(upregulated_genes2, downregulated_genes2)
+
+# Merge the differentially expressed genes
+merged_deg <- rbind(deg_DMDI, deg_DMDII)
+
+
 # Find genes upregulated in de_genes1 but downregulated in de_genes2
 genes_upregulated_de1_downregulated_de2 <- intersect(upregulated_gene_names1, downregulated_gene_names2)
+
 # Print the list of genes
 print(genes_upregulated_de1_downregulated_de2)
 
 #Find genes downregulated in de_genes1 but upregulated in de_genes2
 genes_downregulated_de1_upregulated_de2 <- intersect(downregulated_gene_names1, upregulated_gene_names2)
+
 # Print the list of genes
 print(genes_downregulated_de1_upregulated_de2)
 
@@ -258,3 +270,10 @@ write.csv(as.data.frame(genes_upregulated_de1_downregulated_de2),
 write.csv(as.data.frame(genes_downregulated_de1_upregulated_de2),
            file = "genes_downregulated_de1_upregulated_de2.csv")
 
+write.csv(as.data.frame(deg_DMDI),
+          file = "DEG_DMDI.csv")
+
+write.csv(as.data.frame(deg_DMDII),
+          file = "DEG_DMDII.csv")
+write.csv(as.data.frame(merged_deg),
+          file = "Merged_DEG.csv")
