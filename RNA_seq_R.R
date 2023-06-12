@@ -255,6 +255,41 @@ genes_downregulated_de1_upregulated_de2 <- intersect(downregulated_gene_names1, 
 # Print the list of genes
 print(genes_downregulated_de1_upregulated_de2)
 
+#Merge upregulated_gene1 with downregulated_gene1 
+merged_DMDI <- rbind(upregulated_genes1, downregulated_genes1) 
+
+# Rename the columns of merged_DMDI
+colnames(merged_DMDI) <- paste0(colnames(merged_DMDI), "_DMDI")
+
+# Merge upregulated_gene2 with downregulated_gene2 based on row names
+merged_DMDII <- rbind(upregulated_genes2, downregulated_genes2)
+
+## Rename the columns of merged_DMDII
+colnames(merged_DMDII) <- paste0(colnames(merged_DMDII), "_DMDII")
+
+# Add a column named "Genes" with the gene IDs in merged_DMDI
+merged_DMDI$Genes <- rownames(merged_DMDI)
+
+# Add a column named "Genes" with the gene IDs in merged_DMDII
+merged_DMDII$Genes <- rownames(merged_DMDII)
+
+# Merge merged_DMDI and merged_DMDII based on row names (gene IDs)
+merged_deg <- merge(merged_DMDI, merged_DMDII, by = "Genes", all = FALSE)
+
+# Print the merged dataset
+print(merged_deg)
+
+# Create a new column "Expression" based on logFC and FDR conditions in DMDI
+merged_deg$Expression_DMDI <- ifelse(merged_deg$logFC_DMDI > 1 & merged_deg$FDR_DMDI < 0.05, "Upregulated",
+                                ifelse(merged_deg$logFC_DMDI < -1 & merged_deg$FDR_DMDI < 0.05, "Downregulated", NA))
+
+# Create a new column "Expression" based on logFC and FDR conditions in DMDII
+merged_deg$Expression_DMDII <- ifelse(merged_deg$logFC_DMDII > 1 & merged_deg$FDR_DMDII < 0.05, "Upregulated",
+                                     ifelse(merged_deg$logFC_DMDII < -1 & merged_deg$FDR_DMDII < 0.05, "Downregulated", NA))
+
+# Print the merged dataset with the new "Expression" column
+print(merged_deg)
+
 ##Save the lists 
 
 # Export the intersecting genes as Excel files
@@ -277,3 +312,55 @@ write.csv(as.data.frame(deg_DMDII),
           file = "DEG_DMDII.csv")
 write.csv(as.data.frame(merged_deg),
           file = "Merged_DEG.csv")
+write.csv(as.data.frame(merged_deg),
+          file= "Summary_DEG.csv")
+
+
+# Sort merged_deg by logFC in DMDI and DMDII in descending order
+sorted_deg <- merged_deg[order(merged_deg$logFC_DMDI, decreasing = TRUE), ]
+top_genes <- head(sorted_deg$Genes, 100)  # Select top 100 genes
+
+# Subset the logFC columns from DMDI and DMDII for the top genes
+logFC_data <- sorted_deg[sorted_deg$Genes %in% top_genes, c("logFC_DMDI", "logFC_DMDII")]
+
+# Create a matrix of logFC values
+logFC_matrix <- as.matrix(logFC_data)
+
+# Set up color palette
+mypalette <- colorRampPalette(c("blue", "white", "red"))(50)
+
+# Plot the heatmap
+heatmap.2(logFC_matrix,
+          col = mypalette,
+          trace = "none",
+          main = "Top 100 high logFC",
+          xlab = "Samples",
+          ylab = "Genes",
+          scale = "none",
+          cexCol = 0.7,
+          labRow = FALSE)
+
+# Sort merged_deg by logFC in DMDI and DMDII in ascending order
+sorted_deg <- merged_deg[order(merged_deg$logFC_DMDI), ]
+bottom_genes <- head(sorted_deg$Genes, 100)  # Select bottom 100 genes
+
+# Subset the logFC columns from DMDI and DMDII for the bottom genes
+logFC_data <- sorted_deg[sorted_deg$Genes %in% bottom_genes, c("logFC_DMDI", "logFC_DMDII")]
+
+# Create a matrix of logFC values
+logFC_matrix <- as.matrix(logFC_data)
+
+# Set up color palette
+mypalette <- colorRampPalette(c("blue", "white", "red"))(50)
+
+# Plot the heatmap
+heatmap.2(logFC_matrix,
+          col = mypalette,
+          trace = "none",
+          main = "Top 100 of low logFC",
+          xlab = "Samples",
+          ylab = "Genes",
+          scale = "none",
+          cexCol = 0.7,
+          labRow = FALSE)
+
